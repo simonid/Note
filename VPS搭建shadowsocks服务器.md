@@ -1,5 +1,5 @@
 ## VPS搭建shadowsocks服务器
-参考网址：[逗逼根据地](doub.io)  有很多关于科学上网教程，但是因为最近网站被封得严，为了做好备份，我参考复制了部分内容，但都有注明
+参考网址：[逗逼根据地](doub.io)  有很多关于科学上网教程，但是因为最近网站被封得严，为了做好备份，我参考复制了部分内容，但都有注明<br>
 首先购买一个VPS，本人使用virmach的vps(可以油管高清，但是晚上ssh访问吃力)，kvm  $1.25每月，也可以考虑搬瓦工，性价比高，搭建容易（官方就有中文教程）。还有digitalocean，领取github学生包可以免费使用一年
 
 使用doub.io(https://doub.io/ss-jc60/)的一键搭建SSR环境的脚本不能给linux的ss使用，也尝试了网上很多的ss系列代理软件都不成功，所以开始自己搭建
@@ -42,13 +42,34 @@ $ vi /etc/shadowsocks.json
 ```
 ssserver -c /etc/shadowsocks.json -d start
 ```
+该项目地址：
+[shadowsocks-github](https://github.com/ziggear/shadowsocks)
+上述这个项目的信息：
+backup of https://github.com/shadowsocks/shadowsocks
+copy from release 2.8.2
+
+其他简单的一些指令
+```
+ssserver -p 443 -k password -m aes-256-cfb   //最简单的开启命令
+sudo ssserver -p 443 -k password -m aes-256-cfb --user nobody -d start //后台运行
+sudo ssserver -d stop //关闭
+sudo less /var/log/shadowsocks.log   //日志查看
+```
 ### 客户端使用
 ####下载相关软件工具
-比如：(https://github.com/shadowsocks/shadowsocks-libev/releases)
+[所有平台的ss客户端](https://shadowsocks.org/en/download/clients.html)
+但是不知道为什么linux不能用pip方式下载到shadowsocks-libev
+不过我们还是有上述server端提到的那个ss项目，实际上它也是包含client，使用的指令是sslocal
 
 编辑客户端的配置的文件时内容和服务端一致，然后启动客户端
 ```
-$ ./shadowsocks-local-linux64-1.1.5  -c config.json -d start
+$ ./sslocal  -c config.json -d start
+```
+其他命令：
+```
+sslocal  -p 443 -k password -m aes-256-cfb   //最简单的开启命令
+ sslocal -p 443 -k password -m aes-256-cfb --user nobody -d start //后台运行
+sudo ssslocal -d stop //关闭
 ```
 至此以上已经配置好了shadowsocks的服务了，可是还不能正常使用，原因很简单，shadowsocks是使用的是socks5代理，如果是浏览器使用，需要安装特定的插件，当然firefox可以直接配置proxy即可，chrome 需要安装SwitchyOmega类似的插件，并且配置。这样一来就不能是全局的使用了，仅仅局限于浏览器。有很多代理转发工具，但是本文将介绍Polipo进行http/https的代理转发（ubuntu版本）
 
@@ -143,6 +164,66 @@ chattr -i /serverspeeder/etc/apx* && /serverspeeder/bin/serverSpeeder.sh uninsta
 ```
 注意：锐捷加速和BBR不能同时共存
 锐速安装参考：[优秀的VPS TCP加速软件 —— 一键锐速安装脚本（开心版）](https://doub.io/ruisu-jc1/)
+
+### 自启动和服务器定时重启
+#### 自启动
+一般而言，我们需要ss在server启动时就能开启，那么我们需要将其加入自启动的队列中
+首先在`/etc/rc.local`中加入执行命令，比如
+```
+ssserver -c /etc/shadowsocks.json -d start
+```
+然后再完成下面这个步骤加多一层保险
+编辑启动文件/etc/init.d/shadowsocks
+内容是：
+```
+nohup ssserver -c /etc/shadowsocks/config.json > /etc/shadowsocks/log &
+```
+再执行
+```
+sudo update-rc.d xxx defaults (xxx是脚本文件名)
+sudo update-rc.d test defaults  //更新后就加入到系统常驻任务
+sudo update-rc.d -f test remove  //卸载
+```
+文件要注意权限
+#### 定时重启
+通过crontab实现
+首先要矫正时间
+```
+cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+```
+vps一般都是又crontab的，如果没有自行下载
+```
+#安装Crontab
+yum install vixie-cron crontabs
+#设置开机启动Crontab
+chkconfig crond on
+#启动Crontab
+service crond start
+
+#安装Crontab
+apt-get install cron
+#重启Crontab
+/etc/init.d/cron restart
+```
+接下来添加执行命令
+```
+crontab -e
+
+0 4 * * * reboot  //每天4点重启一次
+```
+基本格式
+```
+crontab基本格式 : 
+*　　*　　*　　*　　*　　command 
+分　时　日　月　周　命令 
+第1列表示分钟1～59 每分钟用*或者 */1表示 
+第2列表示小时1～23（0表示0点） 
+第3列表示日期1～31 
+第4列表示月份1～12 
+第5列标识号星期0～6（0表示星期天） 
+第6列要运行的命令 
+```
+最后执行`service cron restart`或重启一下vps
 
 ### 安装服务器监控探针脚本
 下面分为两个脚本，一个是监测VPS的负载，另外一个是监测SSR的可用性
@@ -263,3 +344,17 @@ vi ssrstatus.sh
 ```
 默认设置下，打开 “vps的ip:8888"就可以显示了，前面那个脚本是80端口(可以不写)
 ssrstatus内容参考：[『原创』ShadowsocksR/SS账号 在线云监控 — SSRStatus 一键脚本](https://doub.io/shell-jc5/)
+
+
+### 浏览器使用
+在客户端中，如果在不开启全局代理或者浏览器代理的情况下，那么实际上是不能科学上网的。这里不推荐ubuntu的全局模式，因为开了系统全局，整个系统打应用都要走代理。
+#### chrome
+不知从何时起，linux端的chrome不支持浏览器内设置代理（会提示你chrome默认使用全局代理），但是通过chrome命令还是单独可以设置代理的。可以通过google-chrome查看全局指令，下面只提到简单常用的
+```
+google-chrome  --proxy-server="socks://127.0.0.1:1080"  //开本地sock5代理
+google-chrome  --no-proxy-server  //取消代理
+```
+但是，上面的做法还是有不足，因为浏览器并不能识别国内和国外网站，如果用户浏览国内网站依旧走代理，速度又慢又耗流量。建议配和switchyomega插件，并且加上pac文件。本人使用的是[gfwlist的项目](https://github.com/FelisCatus/SwitchyOmega/wiki/GFWList)
+
+### firefox
+和chrome类似，自行查找，如foxyproxy
