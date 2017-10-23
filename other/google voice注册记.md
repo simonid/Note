@@ -21,6 +21,23 @@ contains "$result" "error" || exit 0
 sleep 1
 done
 ```
+另外一个版本：
+```
+#!/bin/bash
+#请注意使用UTF-8 without BOM格式，否则可能会出错
+#脚本 by Sunbread
+########## Setting ##########
+threads=16 # 根据自身情况调整，若不会调整则按默认值即可
+########## Code ##########
+echo 伪多线程脚本
+for((i=0;i<$threads;++i));do while :;do
+    [curl ...] >/dev/null 2>/dev/null
+    # 用刚才的命令替换中括号里的内容（包括两个中括号本身）
+done &
+done
+echo 结束脚本请使用Ctrl+C，使用其它方法可能会出现无法预料的异常，谢谢合作
+wait
+```
 用户需要做的，就是把`result=$(...)`内的感叹号替换下面提到的内容。这部分内容需要调出控制台的`Network`选项查看。调出控制台后，点击菜单中的continute，然后`Network`就会有个`POST`字样的内容出现，右键，选中`Copy as cURL (bash)`。然后将复制的内容粘贴到上述位置。<br>
 将最终内容放到vps上，注意要赋予x权限。然后执行：<br>
 ```
