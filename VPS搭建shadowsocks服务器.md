@@ -11,9 +11,8 @@
 ```
 ssh root@0.0.0.0   //后面的ip是vps的ip
 ```
-然后输入秘码就能进去了
-貌似virmach不支持添加ssh-key，所以就不鼓捣了
-如果有兴趣可以参考：[如何在Linux服务器上配置SSH密钥验证](https://www.howtoing.com/how-to-configure-ssh-key-based-authentication-on-a-linux-server)
+然后输入秘码就能进去了<br>
+可以参考：[如何在Linux服务器上配置SSH密钥验证](https://www.howtoing.com/how-to-configure-ssh-key-based-authentication-on-a-linux-server)
 
 ### 服务端搭建
 #### 下载相关工具
@@ -55,6 +54,38 @@ sudo ssserver -p 443 -k password -m aes-256-cfb --user nobody -d start //后台�
 sudo ssserver -d stop //关闭
 sudo less /var/log/shadowsocks.log   //日志查看
 ```
+#### 后台开启shadowsocks-libev多进程多配置
+创建多个配置文件，如：
+```
+/etc/shadowsocks-libev/config1.json /etc/shadowsocks-libev/config2.json /etc/shadowsocks-libev/config3.json
+```
+新建内容如下的脚本：
+```
+#!/bin/bash
+ 
+USER="nobody"
+GROUP="nogroup"
+DAEMON=/usr/bin/ss-server
+ 
+# 配置文件1
+CONFFILE1=/etc/shadowsocks-libev/config1.json
+# 相应的进程PID文件
+PIDFILE1=/var/run/shadowsocks-1.pid
+# 启动ss-server
+start-stop-daemon --start --quiet --pidfile $PIDFILE1 --chuid $USER:$GROUP --exec $DAEMON -- \
+    -c "$CONFFILE1" -u -f $PIDFILE1
+# 配置文件2
+CONFFILE2=/etc/shadowsocks-libev/config2.json
+PIDFILE2=/var/run/shadowsocks-2.pid
+start-stop-daemon --start --quiet --pidfile $PIDFILE2 --chuid $USER:$GROUP --exec $DAEMON -- \
+    -c "$CONFFILE2" -u -f $PIDFILE2
+# 配置文件3
+CONFFILE3=/etc/shadowsocks-libev/config3.json
+PIDFILE3=/var/run/shadowsocks-3.pid
+start-stop-daemon --start --quiet --pidfile $PIDFILE3 --chuid $USER:$GROUP --exec $DAEMON -- \
+    -c "$CONFFILE3" -u -f $PIDFILE3
+```
+保存后加上x权限<br>
 ### 客户端使用
 ####下载相关软件工具
 [所有平台的ss客户端](https://shadowsocks.org/en/download/clients.html)
