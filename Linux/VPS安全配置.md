@@ -162,3 +162,40 @@ DENYHOSTS_CFG   = "/etc/denyhosts.conf"
 ```
 ~/denyhosts/daemon-control start
 ```
+
+详细配置：
+```
+1 SECURE_LOG = /var/log/secure               #指定ssh日志文件
+ 2 HOSTS_DENY = /etc/hosts.deny               #记录阻止登陆系统IP的文件
+ 3 PURGE_DENY =                               #清理HOSTS_DENY文件的时间
+ 4 BLOCK_SERVICE  = sshd                      #在HOSTS_DENY中定义要阻止的服务
+ 5 DENY_THRESHOLD_INVALID = 5                 #系统不存在用户失败次数
+ 6 DENY_THRESHOLD_VALID = 10                  #除root外，系统存在用户失败次数
+ 7 DENY_THRESHOLD_ROOT = 1                    #root用户失败次数
+ 8 DENY_THRESHOLD_RESTRICTED = 1              #针对WORK_DIR下定义的限制用户名的失败次数
+ 9 WORK_DIR = /usr/share/denyhosts/data       #将deny的host或ip记录到WORK_DIR中
+10 SUSPICIOUS_LOGIN_REPORT_ALLOWED_HOSTS=YES  #来自于allowed-hosts中的可以尝试，是否报告 
+11 HOSTNAME_LOOKUP=YES                        #是否做域名反向解析
+12 LOCK_FILE = /var/lock/subsys/denyhosts     #保证同时只有一个denyhosts程序运行的锁文件
+13        
+14 ADMIN_EMAIL = 123@456.789                  #设置管理员邮箱，系统开启了sendmail就会发邮件
+15 SMTP_HOST = localhost                      #SMTP服务器
+16 SMTP_PORT = 25                             #SMTP端口
+17 SMTP_FROM = DenyHosts <nobody@localhost>   #通知邮件的发信人地址
+18 SMTP_SUBJECT = DenyHosts Report            #发信的主题
+19 AGE_RESET_VALID=5d                         #指定时间没有失败登陆记录，将此主机的失败计数重置为0，（不适用于root）
+20 AGE_RESET_ROOT=25d                         #root用户的重置时间
+21 AGE_RESET_RESTRICTED=25d                   #针对有限制用户的
+22 AGE_RESET_INVALID=10d                      #针对无效用户的
+23    
+24 DAEMON_LOG = /var/log/denyhosts            #程序后台运行的日志记录
+25  
+26 DAEMON_SLEEP = 30s                         #每次读取日志的时间间隔
+27 DAEMON_PURGE = 1h                          #清除机制在 HOSTS_DENY 中终止旧条目的时间间隔
+```
+
+#### fail2ban
+fail2ban是一个方式暴力破解密码的工具
+```
+sudo apt-get install fail2ban
+```
