@@ -86,6 +86,10 @@ start-stop-daemon --start --quiet --pidfile $PIDFILE3 --chuid $USER:$GROUP --exe
     -c "$CONFFILE3" -u -f $PIDFILE3
 ```
 保存后加上x权限<br>
+另外提供秋水大神的一键安装脚本：
+https://teddysun.com/486.html<br>
+https://teddysun.com/342.html<br>
+[Centos下搭建Shadowsocks多用户后端Manyuser+前端ss-panel](https://xianjian10.com/archives/615)<br>
 ### 客户端使用
 ####下载相关软件工具
 [所有平台的ss客户端](https://shadowsocks.org/en/download/clients.html)
@@ -376,6 +380,38 @@ vi ssrstatus.sh
 默认设置下，打开 “vps的ip:8888"就可以显示了，前面那个脚本是80端口(可以不写)
 ssrstatus内容参考：[『原创』ShadowsocksR/SS账号 在线云监控 — SSRStatus 一键脚本](https://doub.io/shell-jc5/)
 
+#### iptables转发通过代理IP加速另外一个代理速度
+假设你的本地电脑为 A，haproxy 服务器为 B，Shadowsocks 服务器为 C。A 当然可以直接去连C，但如上所说，往往你的本地网络国际带宽不足，实际上的可用速度并不快。假设 B 是国内某机房的服务
+器，机房服务器带宽一般来说比你本地网络带宽要大得多。A 连接 B，通过 B 连接 C 中转流量，如此一来，虽然成本有所上升，但却能明显改善网络带宽情况<br><br>
+参考github wiki：<br>https://github.com/shadowsocks/shadowsocks/wiki/Setup-a-Shadowsocks-relay<br>
+另外一个大神的脚本作品：[Haproxy中转Shadowsocks(多用户版)流量一键安装脚本](https://www.gaomingsong.com/480.html)
+```
+wget --no-check-certificate https://soft.gaomingsong.com/haproxy/haproxy.sh && bash haproxy.sh
+```
+配置说明：<br>
+起始端口：指的是你shadowsocks的端口，管理员用的那个端口就是起始端口<br>
+结束端口：这个根据你自己的情况设置，脚本默认的是50001-60000，相当于有一万个端口可以中转，对于大多数ss卖家来说应该足够用了<br>
+Shadowsocks服务器IP地址：特别注意，这个IP指的是你安装shadowsocks的服务器公网IP地址，不是安装haproxy这台服务器的IP地址<br>
+命令：
+```
+    #
+    启动：/etc/init.d/haproxy start
+    #
+    停止：/etc/init.d/haproxy stop
+    #
+    重启：/etc/init.d/haproxy restart
+    #
+    状态：/etc/init.d/haproxy status
+
+    #Debian 或 Ubuntu 系统
+    apt-get -y remove haproxy
+    #
+    #CentOS 系统
+    yum -y remove haproxy
+    #
+    #然后删掉haproxy的配置文件目录
+    rm -rf /etc/haproxy
+```
 
 ### 浏览器使用
 在客户端中，如果在不开启全局代理或者浏览器代理的情况下，那么实际上是不能科学上网的。这里不推荐ubuntu的全局模式，因为开了系统全局，整个系统打应用都要走代理。
