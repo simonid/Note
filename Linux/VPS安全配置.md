@@ -137,6 +137,62 @@ iptables -A FORWARD -j REJECT
 参考：[入手 VPS 后首先该做的事情](https://mozillazg.github.io/2013/01/linux-vps-first-things-need-to-do.html)<br>
 [服务器VPS安全防护](https://zhuanlan.zhihu.com/p/26282070)
 
+#### 设置 Linux 上 SSH 登录的 Email 提醒
+原文只针对`CentOS 6、 CentOS 7、 RHEL 6 和 RHEL 7`<br>
+一、对全部用户生效<br>
+```
+[root@vps ~]# vi /etc/bashrc
+[root@vps ~]# echo 'ALERT - Root Shell Access (vps.ehowstuff.com) on:' `date` `who` | mail -s "Alert: Root Access from `who | cut -d'(' -f2 | cut -d')' -f1`" recipient@gmail.com
+```
+二、只对root生效
+```
+[root@vps ~]# vi .bashrc
+[root@vps ~]# echo 'ALERT - Root Shell Access (vps.ehowstuff.com) on:' `date` `who` | mail -s "Alert: Root Access from `who | cut -d'(' -f2 | cut -d')' -f1`" recipient@gmail.com
+```
+三、只对特定普通用户
+```
+[root@vps ~]# vi /home/skytech/.bashrc
+[root@vps ~]# echo 'ALERT - Root Shell Access (vps.ehowstuff.com) on:' `date` `who` | mail -s "Alert: Root Access from `who | cut -d'(' -f2 | cut -d')' -f1`" recipient@gmail.com
+```
+最后文件的格式：
+```
+    # .bashrc
+    # User specific aliases and functions
+    alias rm='rm -i'
+    alias cp='cp -i'
+    alias mv='mv -i'
+    # Source global definitions
+    if [ -f /etc/bashrc ]; then
+            . /etc/bashrc
+    fi
+    echo 'ALERT - Root Shell Access (vps.ehowstuff.com) on:' `date` `who` | mail -s "Alert: Root Access from `who | cut -d'(' -f2 | cut -d')' -f1`" recipient@gmail.com
+```
+不过，使用mail命令前先要配置信息：
+<br>
+一般高版本linux发行版都内置mailx这个应用<br>
+可以通过`$ which mail`查看路径，
+<br>
+查看配置文件：
+```
+$ strings `which mail` | grep '\.rc'
+```
+然后修改配置文件，在末尾加入:
+```
+set from=TechForGeek@sina.com    smtp=smtp.sina.com
+set smtp-auth-user=TechForGeek@sina.com    smtp-auth-password=TechForGeek    smtp-auth=login
+```
+测试：
+```
+$ mail -s "Subject" recepient@xxx
+```
+-s 选项后面跟的参数表示的是要发送的邮件的主题， recepient@xxx 表示收件人的邮箱地址。<br>
+输入上面的命令并按下回车键后，你就可以在终端输入要发送的邮件的正文了，输入完正文后，按下 <Ctrl> + D 组合键。如果一切都配置正确的话，此时邮件就会发送出去了。<br>
+不过最后执行的时候一直提示：`Could not connect: Operation now in progress
+"/home/simon/dead.letter" 8/198
+... message not sent`这样的错误，并且没收到邮件<br>
+参考：[如何设置 Linux 上 SSH 登录的 Email 提醒 ](https://linux.cn/article-5334-1.html)<br>
+另外一篇文章：[给VPS弄个SSH登录自动邮件提醒+短信提醒](https://www.youngfree.cn/seo/1324.html)<br>
+[mailx配置](https://www.techforgeek.info/send_mail_from_terminal.html)<br>
 ### 使用工具
 #### denyhosts
 Denyhosts是一个Linux系统下阻止暴力破解SSH密码的软件，它的原理与DDoS Deflate类似，可以自动拒绝过多次数尝试SSH登录的IP地址，防止互联网上某些机器常年破解密码的行为，也可以防止黑客对SSH密码进行穷举<br>
