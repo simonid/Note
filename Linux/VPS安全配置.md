@@ -112,6 +112,27 @@ $ sudo chkconfig iptables on  # redhat/centos  5, 6
 $ sudo apt-get install sysv-rc-conf  # ubuntu
 $ sudo sysv-rc-conf iptables on    # ubuntu
 ```
+更多防火墙命令说明:
+```
+# 清除已有iptables规则
+iptables -F
+# 允许本地回环接口(即运行本机访问本机)
+iptables -A INPUT -i lo -j ACCEPT
+# 允许已建立的或相关连的通行
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+#允许所有本机向外的访问
+iptables -A OUTPUT -j ACCEPT
+# 允许访问22端口，以下几条相同，分别是22,80,443端口的访问
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+#如果有其他端口的话，规则也类似，稍微修改上述语句就行
+#允许ping
+iptables -A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT
+#禁止其他未允许的规则访问（注意：如果22端口未加入允许规则，SSH链接会直接断开。）
+iptables -A INPUT -j REJECT 
+iptables -A FORWARD -j REJECT
+```
 
 参考：[入手 VPS 后首先该做的事情](https://mozillazg.github.io/2013/01/linux-vps-first-things-need-to-do.html)<br>
 [服务器VPS安全防护](https://zhuanlan.zhihu.com/p/26282070)
@@ -199,3 +220,78 @@ fail2ban是一个方式暴力破解密码的工具
 ```
 sudo apt-get install fail2ban
 ```
+详细配置（本人用默认）：
+[在Ubuntu中用Fail2Ban保护SSH](http://blog.topspeedsnail.com/archives/262)<br>
+
+#### ddos deflate
+该工具是一个防DDOS的工具<br>
+下载：
+```
+wget http://www.inetbase.com/scripts/ddos/install.sh
+```
+安装：
+```
+sudo chmod 700 install.sh
+sudo ./install.sh
+```
+安装完成后会弹出一堆说明<br>
+修改配置（本人用默认）：
+```
+sudo vim /usr/local/ddos/ddos.conf
+```
+配置信息
+```
+##### Paths of the script and other files
+PROGDIR="/usr/local/ddos"
+PROG="/usr/local/ddos/ddos.sh"
+IGNORE_IP_LIST="/usr/local/ddos/ignore.ip.list"  //IP地址白名单
+CRON="/etc/cron.d/ddos.cron"    //定时执行程序
+APF="/etc/apf/apf"
+IPT="/sbin/iptables"
+##### frequency in minutes for running the script
+##### Caution: Every time this setting is changed, run the script with --cron
+#####          option so that the new frequency takes effect
+FREQ=1   //检查时间间隔，默认1分钟
+##### How many connections define a bad IP? Indicate that below.
+NO_OF_CONNECTIONS=150     //最大连接数，超过这个数IP就会被屏蔽，一般默认即可
+##### APF_BAN=1 (Make sure your APF version is atleast 0.96)
+##### APF_BAN=0 (Uses iptables for banning ips instead of APF)
+APF_BAN=1        //使用APF还是iptables。推荐使用iptables,将APF_BAN的值改为0即可。
+##### KILL=0 (Bad IPs are'nt banned, good for interactive execution of script)
+##### KILL=1 (Recommended setting)
+KILL=1   //是否屏蔽IP，默认即可
+##### An email is sent to the following address when an IP is banned.
+##### Blank would suppress sending of mails
+EMAIL_TO="root"   //当IP被屏蔽时给指定邮箱发送邮件，把root换成自己的邮箱即可
+##### Number of seconds the banned ip should remain in blacklist.
+BAN_PERIOD=600    //禁用IP时间，默认600秒，可根据情况调整
+```
+修改一些问题：<br>
+编辑`/usr/local/ddos/ddos.sh`,将`117行`的`netstat -ntu | awk '{print $5}' | cut -d: -f1 | sort | uniq -c | sort -nr > $BAD_IP_LIST`替换为<br>
+`netstat -ntu | grep ":" | awk '{print $5}' | cut -d: -f1 | sort | uniq -c | sort -nr > $BAD_IP_LIST`<br>
+运行中错误：
+```
+./ddos.sh: 13: [: /usr/local/ddos/ddos.conf: unexpected operator
+DDoS-Deflate version 0.6
+Copyright (C) 2005, Zaf <zaf@vsnl.com>
+$CONF not found.
+```
+将`/usr/local/ddos/ddos.sh`首行内容改为bash格式<br>
+报错：
+```
+Failed to restart crond.service: Unit crond.service not found.
+```
+本人用Ubuntu，服务名是`cron`，所将前面提到的脚本中所有`crond`改为`cron`<br>
+命令：
+```
+# 显示帮助
+ ddos –h
+
+#创建计划任务定期运行脚本 【启动】
+ddos –c
+
+# 阻止超过n个连接的所有IP地址。
+ ddos -k  数量（默认150）
+```
+参考：<br>
+[ddos deflate 安装到使用详解](http://www.jianshu.com/p/f1e44408c195)<br>

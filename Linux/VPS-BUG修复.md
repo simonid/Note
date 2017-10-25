@@ -68,3 +68,32 @@ ssh_exchange_identification: read: Connection reset by peer
 在上面加一行：
 `session [success=1 default=ignore] pam_succeed_if.so service in cron quiet use_uid`
 然后重启cron<br>
+
+#### ping出现ping: unknown host的错误
+首先检查能否ping到网关地址，如果可以，那么查看`/etc/resolve.conf`内的配置，加入DNS规则如：
+```
+nameserver 8.8.8.8
+```
+
+#### Linux TAB键命令补全失效后者出现乱码
+出现这种情况是因为命令解析出错<br>
+编辑`/etc/passwd`，找到当前用户<br>
+配置文件格式：
+```
+   （1）：用户名。
+
+   （2）：密码（已经加密）
+
+   （3）：UID（用户标识）,操作系统自己用的
+
+   （4）：GID组标识。
+
+   （5）：用户全名或本地帐号
+
+   （6）：开始目录
+
+   （7）：登录使用的Shell，就是对登录命令进行解析的工具。
+```
+比如`user:x:1001:1001::/home/user:/bin/sh `，将其修改为：
+`user:x:1001:1001::/home/user:/bin/bash`
+
