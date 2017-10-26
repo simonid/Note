@@ -97,3 +97,34 @@ nameserver 8.8.8.8
 比如`user:x:1001:1001::/home/user:/bin/sh `，将其修改为：
 `user:x:1001:1001::/home/user:/bin/bash`
 
+#### 如何修改主机名
+1.使用指令`hostname newname`，可以马上生效，但是这是暂时<br>
+2.打开` /etc/sysconfig/network`，修改`HOSTNAME`选项<br>
+3.修改`/etc/hosts`，加入新内容`127.0.0.1 newname`<br>
+
+#### yum安装pip
+Ubuntu的安装方式是`sudo apt-get  install python-setuptools && easy_install pip`<br>
+yum的安装方式
+```
+yum -y install epel-release
+yum install python-pip
+pip install --upgrade pip
+```
+
+#### 如何安全地重启（桌面版使用）
+其实这个是用于桌面版的。。。<br>
+如果linux机器死机了，无论按什么都没反应，千万不要强行按电源键关机，有一种安全重启的方式：
+```
+Ctrl + Alt + PrtSc (SysRq) + reisub
+```
+再说明白一点，就是按住Ctrl，Alt和PtrSc（SysRq），按住他们的同时你需要按r，e，i，s，u，b<br>
+
+#### source命令执行带一长串路径的文件 not found的解决
+`source`命令是在当前bash环境下读取并执行文件，一般在更改配置文件后需要用这个命令更新配置。它实际上和`. filename`命令等价。<br>
+```
+ ls -l `which sh` 提示/bin/sh -> dash 
+```
+说明是用dash来进行解析的<br>
+执行
+`sudo dpkg-reconfigure dash`
+在界面中选择no，然后就可以用source了。<b>但是建议还是不要这么折腾，直接进到文件夹后，source就可以了</b>
