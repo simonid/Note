@@ -425,3 +425,52 @@ google-chrome  --no-proxy-server  //取消代理
 
 ### firefox
 和chrome类似，自行查找，如foxyproxy
+
+
+## 号称$7永久使用的服务器cloudatcost搭建
+cloudatcast是vm架构的，感觉应该快要跑路了，$7也是个噱头，后来官方宣布要在用户使用一年后收费$9作为维护，而且速度和稳定性都不好（刚买来ping主机都不通，反复重建才可以用），最好别老是重启<br>
+cac目前政策是只能额外多加一个IP（而且也要看运气好不好），下面介绍一下单网卡双IP配置：
+```
+cp /etc/sysconfig/network-scripts/ifcfg-eth0  /etc/sysconfig/network-scripts/ifcfg-eth0:0
+mv /etc/sysconfig/network-scripts/ifcfg-eth0  ifcfg-eth0
+vi /etc/sysconfig/network-scripts/ifcfg-eth0:1
+注：eth0是第一个网卡 eth0:0 是排序为0网卡上面的0接口，eth0:1 是排序为0网卡上面的1接口 ，最多可以支持255个 
+centos6输入
+    DEVICE=eth0:0
+    BOOTPROTO=static
+    IPADDR=新IP
+    NETMASK=255.255.255.0
+    GATEWAY=新IP主机
+    onboot=YES
+centos7输入：
+    TYPE=Ethernet
+    BOOTPROTO="static"
+    NAME=enp0s3
+    DEVICE=enp0s3
+    NM_CONTROLLED="no"
+    IPADDR0=192.168.1.10      # IP
+    IPADDR1=192.168.2.22
+    NETMASK=255.255.255.0   # 子网掩码
+    GATEWAY0=192.168.1.1     #网关
+    GATEWAY1=192.168.2.1
+    DNS1=119.29.29.29    # DNS
+    DNS2=223.5.5.5
+    DEFROUTE=yes
+    PEERDNS=yes
+    PEERROUTES=yes
+    PREFIX0=24
+    PREFIX2=16
+    IPV4_FAILURE_FATAL=no
+    IPV6INIT=yes
+    IPV6_AUTOCONF=yes
+    IPV6_DEFROUTE=yes
+    IPV6_FAILURE_FATAL=no
+    IPV6_PEERDNS=yes
+    IPV6_PEERROUTES=yes
+    IPV6_PRIVACY=no
+    UUID=59504c7c-11b3-40c5-86a8-7bfbe7527109
+    ONBOOT=yes
+service network restart  //重启网络
+```
+本人用centos6，锐速不支持，但是可以改内核以支持<br>
+参考：https://jalena.bcsytv.com/archives/1395<br>
