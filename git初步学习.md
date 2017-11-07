@@ -38,6 +38,13 @@ Your public key has been saved in /home/simon/.ssh/id_rsa.pub.
 ssh -T git@github.com
 ```
 如果有You've successfully authenticated提示就成功了
+如果提示
+```
+The authenticity of host 'github.com (192.30.255.112)' can't be established.
+RSA key fingerprint is SHA256:xxxxx
+Are you sure you want to continue connecting (yes/no)? 
+```
+这类说明不用紧张，只是第一次用ssh登录，系统会验证身份，填yes就ok
 
 ## 提交第一个项目
 我们先初始化本地的版本库，如果你已经在github初始化了readme并且打算修改它，可以先clone下来
@@ -55,6 +62,15 @@ git push -u origin master  //将本地所有文件推送到远程master分支，
 ```
 至此完成第一个项目初步推送
 
+### 和远程同步（pull）操作
+首先输入
+```
+git  pull
+```
+载入本地变更 ：`git  commit  -a` 或者 `git add`  （可忽略）
+添加文件到本地： `git  add  文件名` 
+提交本地变化：`git  commit -m  内容`
+同步到远程：`git  push origin  master`
 #### 其他一些指令：
 ```
 git status   //查看仓库当前状态，可以检查本地未添加到本地仓库的文件
