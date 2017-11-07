@@ -11,9 +11,8 @@
 ```
 ssh root@0.0.0.0   //后面的ip是vps的ip
 ```
-然后输入秘码就能进去了
-貌似virmach不支持添加ssh-key，所以就不鼓捣了
-如果有兴趣可以参考：[如何在Linux服务器上配置SSH密钥验证](https://www.howtoing.com/how-to-configure-ssh-key-based-authentication-on-a-linux-server)
+然后输入秘码就能进去了<br>
+可以参考：[如何在Linux服务器上配置SSH密钥验证](https://www.howtoing.com/how-to-configure-ssh-key-based-authentication-on-a-linux-server)
 
 ### 服务端搭建
 #### 下载相关工具
@@ -55,6 +54,42 @@ sudo ssserver -p 443 -k password -m aes-256-cfb --user nobody -d start //后台�
 sudo ssserver -d stop //关闭
 sudo less /var/log/shadowsocks.log   //日志查看
 ```
+#### 后台开启shadowsocks-libev多进程多配置
+创建多个配置文件，如：
+```
+/etc/shadowsocks-libev/config1.json /etc/shadowsocks-libev/config2.json /etc/shadowsocks-libev/config3.json
+```
+新建内容如下的脚本：
+```
+#!/bin/bash
+ 
+USER="nobody"
+GROUP="nogroup"
+DAEMON=/usr/bin/ss-server
+ 
+# 配置文件1
+CONFFILE1=/etc/shadowsocks-libev/config1.json
+# 相应的进程PID文件
+PIDFILE1=/var/run/shadowsocks-1.pid
+# 启动ss-server
+start-stop-daemon --start --quiet --pidfile $PIDFILE1 --chuid $USER:$GROUP --exec $DAEMON -- \
+    -c "$CONFFILE1" -u -f $PIDFILE1
+# 配置文件2
+CONFFILE2=/etc/shadowsocks-libev/config2.json
+PIDFILE2=/var/run/shadowsocks-2.pid
+start-stop-daemon --start --quiet --pidfile $PIDFILE2 --chuid $USER:$GROUP --exec $DAEMON -- \
+    -c "$CONFFILE2" -u -f $PIDFILE2
+# 配置文件3
+CONFFILE3=/etc/shadowsocks-libev/config3.json
+PIDFILE3=/var/run/shadowsocks-3.pid
+start-stop-daemon --start --quiet --pidfile $PIDFILE3 --chuid $USER:$GROUP --exec $DAEMON -- \
+    -c "$CONFFILE3" -u -f $PIDFILE3
+```
+保存后加上x权限<br>
+另外提供秋水大神的一键安装脚本：
+https://teddysun.com/486.html<br>
+https://teddysun.com/342.html<br>
+[Centos下搭建Shadowsocks多用户后端Manyuser+前端ss-panel](https://xianjian10.com/archives/615)<br>
 ### 客户端使用
 ####下载相关软件工具
 [所有平台的ss客户端](https://shadowsocks.org/en/download/clients.html)
@@ -345,6 +380,38 @@ vi ssrstatus.sh
 默认设置下，打开 “vps的ip:8888"就可以显示了，前面那个脚本是80端口(可以不写)
 ssrstatus内容参考：[『原创』ShadowsocksR/SS账号 在线云监控 — SSRStatus 一键脚本](https://doub.io/shell-jc5/)
 
+#### iptables转发通过代理IP加速另外一个代理速度
+假设你的本地电脑为 A，haproxy 服务器为 B，Shadowsocks 服务器为 C。A 当然可以直接去连C，但如上所说，往往你的本地网络国际带宽不足，实际上的可用速度并不快。假设 B 是国内某机房的服务
+器，机房服务器带宽一般来说比你本地网络带宽要大得多。A 连接 B，通过 B 连接 C 中转流量，如此一来，虽然成本有所上升，但却能明显改善网络带宽情况<br><br>
+参考github wiki：<br>https://github.com/shadowsocks/shadowsocks/wiki/Setup-a-Shadowsocks-relay<br>
+另外一个大神的脚本作品：[Haproxy中转Shadowsocks(多用户版)流量一键安装脚本](https://www.gaomingsong.com/480.html)
+```
+wget --no-check-certificate https://soft.gaomingsong.com/haproxy/haproxy.sh && bash haproxy.sh
+```
+配置说明：<br>
+起始端口：指的是你shadowsocks的端口，管理员用的那个端口就是起始端口<br>
+结束端口：这个根据你自己的情况设置，脚本默认的是50001-60000，相当于有一万个端口可以中转，对于大多数ss卖家来说应该足够用了<br>
+Shadowsocks服务器IP地址：特别注意，这个IP指的是你安装shadowsocks的服务器公网IP地址，不是安装haproxy这台服务器的IP地址<br>
+命令：
+```
+    #
+    启动：/etc/init.d/haproxy start
+    #
+    停止：/etc/init.d/haproxy stop
+    #
+    重启：/etc/init.d/haproxy restart
+    #
+    状态：/etc/init.d/haproxy status
+
+    #Debian 或 Ubuntu 系统
+    apt-get -y remove haproxy
+    #
+    #CentOS 系统
+    yum -y remove haproxy
+    #
+    #然后删掉haproxy的配置文件目录
+    rm -rf /etc/haproxy
+```
 
 ### 浏览器使用
 在客户端中，如果在不开启全局代理或者浏览器代理的情况下，那么实际上是不能科学上网的。这里不推荐ubuntu的全局模式，因为开了系统全局，整个系统打应用都要走代理。
@@ -358,3 +425,52 @@ google-chrome  --no-proxy-server  //取消代理
 
 ### firefox
 和chrome类似，自行查找，如foxyproxy
+
+
+## 号称$7永久使用的服务器cloudatcost搭建
+cloudatcast是vm架构的，感觉应该快要跑路了，$7也是个噱头，后来官方宣布要在用户使用一年后收费$9作为维护，而且速度和稳定性都不好（刚买来ping主机都不通，反复重建才可以用），最好别老是重启<br>
+cac目前政策是只能额外多加一个IP（而且也要看运气好不好），下面介绍一下单网卡双IP配置：
+```
+cp /etc/sysconfig/network-scripts/ifcfg-eth0  /etc/sysconfig/network-scripts/ifcfg-eth0:0
+mv /etc/sysconfig/network-scripts/ifcfg-eth0  ifcfg-eth0
+vi /etc/sysconfig/network-scripts/ifcfg-eth0:1
+注：eth0是第一个网卡 eth0:0 是排序为0网卡上面的0接口，eth0:1 是排序为0网卡上面的1接口 ，最多可以支持255个 
+centos6输入
+    DEVICE=eth0:0
+    BOOTPROTO=static
+    IPADDR=新IP
+    NETMASK=255.255.255.0
+    GATEWAY=新IP主机
+    onboot=YES
+centos7输入：
+    TYPE=Ethernet
+    BOOTPROTO="static"
+    NAME=enp0s3
+    DEVICE=enp0s3
+    NM_CONTROLLED="no"
+    IPADDR0=192.168.1.10      # IP
+    IPADDR1=192.168.2.22
+    NETMASK=255.255.255.0   # 子网掩码
+    GATEWAY0=192.168.1.1     #网关
+    GATEWAY1=192.168.2.1
+    DNS1=119.29.29.29    # DNS
+    DNS2=223.5.5.5
+    DEFROUTE=yes
+    PEERDNS=yes
+    PEERROUTES=yes
+    PREFIX0=24
+    PREFIX2=16
+    IPV4_FAILURE_FATAL=no
+    IPV6INIT=yes
+    IPV6_AUTOCONF=yes
+    IPV6_DEFROUTE=yes
+    IPV6_FAILURE_FATAL=no
+    IPV6_PEERDNS=yes
+    IPV6_PEERROUTES=yes
+    IPV6_PRIVACY=no
+    UUID=59504c7c-11b3-40c5-86a8-7bfbe7527109
+    ONBOOT=yes
+service network restart  //重启网络
+```
+本人用centos6，锐速不支持，但是可以改内核以支持<br>
+参考：https://jalena.bcsytv.com/archives/1395<br>
