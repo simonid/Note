@@ -351,3 +351,71 @@ ddos –c
 ```
 参考：<br>
 [ddos deflate 安装到使用详解](http://www.jianshu.com/p/f1e44408c195)<br>
+
+
+#### 系统安全检测工具Rkhunter
+Rkhunter是一个非常全面的安全工具，具体能实现什么，可以检查服务器是否感染了病毒或可疑文件，对root权限进行检测。<br>
+网站：<br>http://rkhunter.sourceforge.net/<br>
+
+依赖安装：
+```
+sudo apt-get install binutils libreadline5 libruby ruby ruby ssl-cert unhide.rb mailutils
+```
+
+下载安装包并安装
+```
+wget http://downloads.sourceforge.net/project/rkhunter/rkhunter/1.4.4/rkhunter-1.4.4.tar.gz
+
+tar xzvf rkhunter*
+
+cd rkhunter*
+
+sudo ./installer.sh --layout /usr --install
+```
+
+检查更新
+```
+sudo rkhunter --update
+```
+
+检查
+```
+sudo rkhunter --check
+```
+
+跳过前面检查中的回车
+```
+/usr/bin/rkhunter --checkall --skip-keypress 
+```
+
+创建定时任务
+输入`sudo crontab -e`后输入：
+```
+0 3 * * 3 root /usr/bin/rkhunter --checkall --cronjob
+可以先用whereis rkhunter确定其位置
+```
+指定每周三的3：00做一次检查<br>
+ 
+常用功能<br>
+```
+–checkall (-c) :全系統檢測，rkhunter 的所有檢測項目
+–createlogfile :建立登錄檔，一般預設放在 /var/log/rkhunter.log
+–cronjob :可以使用 crontab 來執行，不會有顏色顯示
+–report-warnings-only :僅列出警告訊息，正常訊息不列出！
+–skip-application-check :忽略套件版本檢測(如果您已確定系統的套件已patch)
+–skip-keypress :忽略按鍵後繼續的舉動(程式會持續自動執行)
+–quiet :僅顯示有問題的訊息，比 –report-warnings-only 更少訊息
+–versioncheck :檢測試否有新的版本在伺服器上
+–update :更新 rkhunter 的資料庫來取得最新的資訊
+```
+
+参考:<br>
+[鸟哥的教程](http://linux.vbird.org/linux_security/0420rkhunter.php)<br>
+http://smallken.com/blog/2006/11/27/linux/34.html<br>
+
+
+#### 权限枚举工具linenum
+LinEnum是一款Linux文件枚举及权限提升检查工具<br>
+[Github地址](https://github.com/rebootuser/LinEnum)<br>
+安装:`wget -N --no-check-certificate https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh
+`<br>
