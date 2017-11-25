@@ -428,8 +428,33 @@ google-chrome  --no-proxy-server  //取消代理
 
 
 ## 号称$7永久使用的服务器cloudatcost搭建
-cloudatcast是vm架构的，感觉应该快要跑路了，$7也是个噱头，后来官方宣布要在用户使用一年后收费$9作为维护，而且速度和稳定性都不好（刚买来ping主机都不通，反复重建才可以用），最好别老是重启<br>
-cac目前政策是只能额外多加一个IP（而且也要看运气好不好），下面介绍一下单网卡双IP配置：
+cloudatcast是vm架构的，感觉应该快要跑路了，$7也是个噱头，后来官方宣布要在用户使用一年后收费$9作为维护，而且速度和稳定性都不好（刚买来ping主机都不通，反复重建才可以用），最好别老是重启<br><br>
+
+CAC CentOS6 单网卡双IP配置：<br>
+```
+cp /etc/sysconfig/network-scripts/ifcfg-eth0  
+/etc/sysconfig/network-scripts/ifcfg-eth0:0
+#第一个IP的配置
+
+mv /etc/sysconfig/network-scripts/ifcfg-eth0  ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth0  ifcfg-eth0.bak
+#备份原网卡信息
+
+vi /etc/sysconfig/network-scripts/ifcfg-eth0:1
+#编辑第二个IP信息
+```
+配置如下：
+```
+DEVICE=eth0:1
+BOOTPROTO=static
+ONBOOT=yes
+IPADDR=第二个IP
+NETMASK=255.255.255.0
+GATEWAY=IP网关
+```
+
+
+下面方法太过繁杂，有不少不需要的配置信息，不建议使用<br>
+~~cac目前政策是只能额外多加一个IP（而且也要看运气好不好），下面介绍一下单网卡双IP配置：~~
 ```
 cp /etc/sysconfig/network-scripts/ifcfg-eth0  /etc/sysconfig/network-scripts/ifcfg-eth0:0
 mv /etc/sysconfig/network-scripts/ifcfg-eth0  ifcfg-eth0
@@ -474,3 +499,91 @@ service network restart  //重启网络
 ```
 本人用centos6，锐速不支持，但是可以改内核以支持<br>
 参考：https://jalena.bcsytv.com/archives/1395<br>
+
+
+### VPS SS/SSR流量伪装
+可以设置SS/SSR的端口为80或443伪装为正常流量。但是如果VPS还需要建站，那么就需要设置一个代理网站流量的应用，这里选择caddy，一个比较轻巧实用的服务器<br>
+#### 下载并安装
+```
+wget -N --no-check-certificate https://softs.fun/Bash/caddy_install.sh && chmod +x caddy_install.sh
+
+# 如果上面这个脚本无法下载，尝试使用备用下载：
+wget -N --no-check-certificate https://raw.githubusercontent.com/ToyoDAdoubi/doubi/master/caddy_install.sh && chmod +x caddy_install.sh && bash caddy_install.sh install http.filemanager
+```
+caddy的配置文件为`/usr/local/caddy/Caddyfile`,需要用户自己创建<br>
+另外创建文件夹:`/usr/local/caddy/www/ssr`<br>
+#### http
+如果需要伪装80端口，假设caddy监听6666端口，修改配置：
+```
+你的IP或域名:6666 {
+ root /usr/local/caddy/www/ssr
+ timeouts none
+ gzip
+}
+```
+#### https
+```
+你的IP或域名:6666 {
+ root /usr/local/caddy/www/ssr
+ timeouts none
+ tls /root/xxx.crt /root/xxx.key #证书和密钥
+ gzip
+}
+```
+
+如果没有证书和密钥，可以用邮箱(在用)：<br>
+```
+你的ip或域名:6666 {
+ root /usr/local/caddy/www/ssr
+ timeouts none
+ tls xxxx@xxx.xx
+ gzip
+}
+```
+
+#### http重定向为https
+```
+你的ip或域名:80 {
+ timeouts none
+ redir 你的ip或域名:443{url}
+}
+你的ip或域名:6666 {
+ root /usr/local/caddy/www/ssr
+ gzip
+ tls /root/xxx.crt /root/xxx.key
+}
+```
+
+#### caddy命令
+```
+启动：/etc/init.d/caddy start
+
+停止：/etc/init.d/caddy stop
+
+重启：/etc/init.d/caddy restart
+
+查看状态：/etc/init.d/caddy status
+
+查看Caddy启动日志： tail -f /tmp/caddy.log
+```
+
+修改ssr配置：<br>
+```
+sudo vi /etc/shadowsocksr/user-config.json
+```
+找到redirect项<br>
+如果是http:<br>
+```
+"redirect": ["*:80#127.0.0.1:2333"]
+```
+如果是https：<br>
+```
+ "redirect": ["*:443#127.0.0.1:6666"],
+```
+多端口:<br>
+```
+ "redirect": ["*:888#127.0.0.1:2333", "*:666#127.0.0.1:6666"],
+```
+重启ssr<br>
+
+caddy还可以搭建私人网盘:https://doub.io/jzzy-3/<br>
