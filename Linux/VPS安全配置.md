@@ -67,6 +67,18 @@ PermitEmptyPasswords no #禁止空密码
 /etc/init.d/ssh restart
 ```
 
+这里补充一下过去踩过的坑，有些VPS不自带SSH，需要用户自己安装，centos的例子：<br>
+```
+#rpm -qa |grep ssh 检查是否装了SSH包
+没有的话yum install openssh-server
+#chkconfig --list sshd 检查SSHD是否在本运行级别下设置为开机启动
+#chkconfig --level 2345 sshd on  如果没设置启动就设置下.
+#service sshd restart  重新启动
+#netstat -antp |grep sshd  看是否启动了22端口.确认下.
+#iptables -nL  看看是否放行了22口.
+#setup---->防火墙设置   如果没放行就设置放行.
+```
+
 ### 配置防火墙
 安装：
 ```
@@ -92,6 +104,49 @@ $ sudo vi /etc/sysconfig/iptables
 -A INPUT -j DROP
 COMMIT
 ```
+
+Debian官方的建议配置：<br>
+```
+*filter
+
+# Allows all loopback (lo0) traffic and drop all traffic to 127/8 that doesn't use lo0
+-A INPUT -i lo -j ACCEPT
+-A INPUT ! -i lo -d 127.0.0.0/8 -j REJECT
+
+# Accepts all established inbound connections
+-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Allows all outbound traffic
+# You could modify this to only allow certain traffic
+-A OUTPUT -j ACCEPT
+
+# Allows HTTP and HTTPS connections from anywhere (the normal ports for websites)
+-A INPUT -p tcp --dport 80 -j ACCEPT
+-A INPUT -p tcp --dport 443 -j ACCEPT
+
+# Allows SSH connections 
+# The --dport number is the same as in /etc/ssh/sshd_config
+-A INPUT -p tcp -m state --state NEW --dport 22 -j ACCEPT
+
+# Now you should read up on iptables rules and consider whether ssh access 
+# for everyone is really desired. Most likely you will only allow access from certain IPs.
+
+# Allow ping
+#  note that blocking other types of icmp packets is considered a bad idea by some
+#  remove -m icmp --icmp-type 8 from this line to allow all kinds of icmp:
+#  https://security.stackexchange.com/questions/22711
+-A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT
+
+# log iptables denied calls (access via 'dmesg' command)
+-A INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables denied: " --log-level 7
+
+# Reject all other inbound - default deny unless explicitly allowed policy:
+-A INPUT -j REJECT
+-A FORWARD -j REJECT
+
+COMMIT  
+```
+
 对于Ubuntu要稍微加点内容：<br>
 ```
 $ sudo vi /etc/iptables.up.rules  # 添加上面的规则
@@ -136,8 +191,11 @@ iptables -A FORWARD -j REJECT
 
 参考：[入手 VPS 后首先该做的事情](https://mozillazg.github.io/2013/01/linux-vps-first-things-need-to-do.html)<br>
 [服务器VPS安全防护](https://zhuanlan.zhihu.com/p/26282070)
+[Ubuntu UFW防火墙配置](https://www.logcg.com/archives/988.html)<br>
+[购买了VPS之后你应该做足的安全措施](https://www.logcg.com/archives/884.html)<br>
 
 #### 设置 Linux 上 SSH 登录的 Email 提醒
+
 原文只针对`CentOS 6、 CentOS 7、 RHEL 6 和 RHEL 7`<br>
 一、对全部用户生效<br>
 ```
@@ -197,6 +255,11 @@ $ mail -s "Subject" recepient@xxx
 #### denyhosts
 Denyhosts是一个Linux系统下阻止暴力破解SSH密码的软件，它的原理与DDoS Deflate类似，可以自动拒绝过多次数尝试SSH登录的IP地址，防止互联网上某些机器常年破解密码的行为，也可以防止黑客对SSH密码进行穷举<br>
 [GitHub地址](https://github.com/denyhosts/denyhosts)<br>
+
+<font color="red" size=4>简化版denyhost使用</font><br>
+直接：`sudo apt-get install denyhost`<br>
+这样，就不需要像下面那样复杂地使用了<br>
+
 配置：<br>
 将默认配置文件复制到`/etc`下：
 ```
@@ -278,6 +341,58 @@ sudo apt-get install fail2ban
 ```
 详细配置（本人用默认）：
 [在Ubuntu中用Fail2Ban保护SSH](http://blog.topspeedsnail.com/archives/262)<br>
+
+补充配置fail2ban:<br>
+复制一份本地配置文件<br>
+```
+sudo mv /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+```
+编辑jail.local:<br>
+```
+# 以空格分隔的列表，可以是 IP 地址、CIDR 前缀或者 DNS 主机名
+# 用于指定哪些地址可以忽略 fail2ban 防御
+ignoreip = 127.0.0.1 172.31.0.0/24 10.10.0.0/24 192.168.0.0/24
+ 
+# 客户端主机被禁止的时长（秒）
+bantime = 86400
+ 
+# 客户端主机被禁止前允许失败的次数 
+maxretry = 5
+ 
+# 查找失败次数的时长（秒）
+findtime = 600
+ 
+mta = sendmail
+ 
+[ssh-iptables]
+enabled = true
+filter = sshd
+action = iptables[name=SSH, port=ssh, protocol=tcp]
+sendmail-whois[name=SSH, dest=your@email.com, sender=fail2ban@email.com]
+# Debian 系的发行版 
+logpath = /var/log/auth.log
+# Red Hat 系的发行版
+logpath = /var/log/secure
+# ssh 服务的最大尝试次数 
+maxretry = 3
+```
+修改后重启：<br>
+```
+sudo service fail2ban restart
+或
+sudo systemctl restart fail2ban
+```
+验证fail2ban是否开启：<br>
+```
+$ sudo fail2ban-client ping
+Server replied: pong #开启返回信息
+```
+查看日志：<br>
+```
+$ sudo tail -f /var/log/fail2ban.log
+```
+
+参考：[Linux中国](https://linux.cn/article-5067-1.html)<br>
 
 #### ddos deflate
 该工具是一个防DDOS的工具<br>
