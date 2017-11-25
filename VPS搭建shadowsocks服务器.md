@@ -427,7 +427,7 @@ google-chrome  --no-proxy-server  //取消代理
 和chrome类似，自行查找，如foxyproxy
 
 
-## 号称$7永久使用的服务器cloudatcost搭建
+### 号称$7永久使用的服务器cloudatcost搭建
 cloudatcast是vm架构的，感觉应该快要跑路了，$7也是个噱头，后来官方宣布要在用户使用一年后收费$9作为维护，而且速度和稳定性都不好（刚买来ping主机都不通，反复重建才可以用），最好别老是重启<br><br>
 
 CAC CentOS6 单网卡双IP配置：<br>
