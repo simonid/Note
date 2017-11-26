@@ -17,6 +17,28 @@ passwd username
 echo -e "\nusername ALL=(ALL) ALL\n" >> /etc/sudoers
 tail -3 /etc/sudoers //检查
 ```
+
+#### 解决tab不能补全，上下不能切换历史命令
+这种情况常出现在新增用户并切换到该用户的执行环境，同时，用户名和主机名也不会出现，只会显示一个"$"符号。<br><br>
+这是由于/etc/passwd里新增用户的shell和root用户不一样导致的，root使用/bin/bash，新增用户默认为/bin/sh。<br>
+<br>
+查看:<br>
+```
+ls -l /bin/sh
+返回/bin/sh -> dash
+```
+修改：<br>
+```
+cd /bin
+sudo ln -sf bash /bin/sh
+```
+检查：<br>
+```
+ls -l /bin/sh
+返回/bin/sh -> bash
+```
+
+
 ### 创建ssh密钥对
 备注：centos的ssh服务名为`sshd`，Ubuntu是`ssh`<br>
 切换到普通用户：
