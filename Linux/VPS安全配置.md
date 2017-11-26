@@ -61,13 +61,20 @@ su -l username
 ```
 ssh-keygen
 ```
-一路回车再执行：
+会输出的选项：<br>
+`Enter file in which to save the key`：选择密钥目录的位置,保持默认就好<br>
+然后要输入密钥文件的密码(二次验证)<br>
+
+再执行：
 ```
 $ cd ~/.ssh 
 $ cat id_rsa.pub >> authorized_keys
 $ ls 
 authorized_keys  id_rsa  id_rsa.pub
 $ chmod 400 authorized_keys
+$ chmod 700 ./.ssh
+
+如果要清空authorized_keys的内容，可以在vi命令模式下输入ggdG清空全部
 ```
 `.ssh`目录下的id_rsa是客户端登录的私钥，我们需要将它从服务端下载到本地<br>
 再客户端终端中输入：<br>
@@ -82,12 +89,18 @@ $ get id_rsa
 PermitRootLogin no #禁止root登录
 RSAAuthentication yes #RSA认证
 PubkeyAuthentication yes #开启公钥验证
-AuthorizedKeysFile .ssh/authorized_keys #验证文件路径
+AuthorizedKeysFile %h/.ssh/authorized_keys #验证文件路径(当前登录用户下的)
 PasswordAuthentication no #禁止密码认证
 PermitEmptyPasswords no #禁止空密码
 # 最后保存，重启
 /etc/init.d/ssh restart
 ```
+
+如果是有多个VPS需要这么做，可以设置所有的VPS公私钥都一致：<br>
+首先，打开第一台VPS的公钥authorized_keys，将其内容复制到第二台的公钥中，然后，第二台就能使用和第一台一样的私钥(即id_rsa)了。<br>
+<br>
+注意:一旦设置了禁止root登录，就算配了密钥对，也不可以登录。并且，用户需要注意密钥目录的位置和权限<br>
+
 
 这里补充一下过去踩过的坑，有些VPS不自带SSH，需要用户自己安装，centos的例子：<br>
 ```
