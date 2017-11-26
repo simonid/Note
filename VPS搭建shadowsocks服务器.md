@@ -505,7 +505,7 @@ service network restart  //重启网络
 可以设置SS/SSR的端口为80或443伪装为正常流量。但是如果VPS还需要建站，那么就需要设置一个代理网站流量的应用，这里选择caddy，一个比较轻巧实用的服务器<br>
 #### 下载并安装
 ```
-wget -N --no-check-certificate https://softs.fun/Bash/caddy_install.sh && chmod +x caddy_install.sh
+wget -N --no-check-certificate https://softs.fun/Bash/caddy_install.sh && chmod +x caddy_install.sh && bash caddy_install.sh install http.filemanager
 
 # 如果上面这个脚本无法下载，尝试使用备用下载：
 wget -N --no-check-certificate https://raw.githubusercontent.com/ToyoDAdoubi/doubi/master/caddy_install.sh && chmod +x caddy_install.sh && bash caddy_install.sh install http.filemanager
