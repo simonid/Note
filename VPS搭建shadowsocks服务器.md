@@ -587,3 +587,71 @@ sudo vi /etc/shadowsocksr/user-config.json
 重启ssr<br>
 
 caddy还可以搭建私人网盘:https://doub.io/jzzy-3/<br>
+
+
+### 针对超售的OVZ的策略
+买了一个virmach的ovz host，在面板上显示内存占用98%，实际内存并没有占用那么多，这就是超售的情况。为了避免一个高占用导致软件运行异常，也为了避免封号，需要写一个脚本定时检测，过高则重启<br>
+```bash
+#!/bin/sh
+
+TOP_SYS_LOAD_NUM=5
+#负载均衡最大为5
+
+SYS_LOAD_NUM=`uptime | awk '{print $(NF-2)}' | sed 's/,//'`
+
+#echo $(date +"%y-%m-%d") `uptime`
+if [ `echo "$TOP_SYS_LOAD_NUM < $SYS_LOAD_NUM"|bc` -eq 1 ]
+then
+reboot
+fi
+```
+
+赋予执行权限：`chmod a+x xxx.sh`
+
+然后`crontab -e`创建定时任务：<br>
+```
+*/10 * * * * root /root/checkmemory.sh
+#每10分钟检测一次
+```
+
+重启cron：
+```
+/etc/init.d/cron restart
+```
+
+参考：<br>
+[Linux服务器中高负载现象故障排查指南](http://os.51cto.com/art/201307/402699_all.htm)<br>
+
+[负载过高，自动重启appache](http://www.wenrouge.com/post/1264)<br>
+
+[释放内存以及自动脚本](http://www.wenrouge.com/post/1284)<br>
+
+
+
+### 自动检测任务的运行状态
+VPS上有些任务可能会因为特殊情况而关闭，可以用一个脚本来监视一个任务的运行状态：<br>
+```bash
+#! /bin/sh
+ 
+proc_name="procname"                             # 待监控进程名
+ 
+number=`ps -ef | grep $proc_name | grep -v grep | wc -l`
+ 
+if [ $number -eq 0 ]                             # 判断进程是否存在
+then 
+	/etc/init.d/procname restart               # 重启进程的命令，请相应修改	
+fi
+```
+
+定时任务：
+```
+* * * * * root /root/xxx.sh
+```
+
+重启cron：
+```
+/etc/init.d/cron restart
+```
+
+参考：<br>
+[Debian vps进程监控并自动重启](http://www.tennfy.com/3517.html)<br>
