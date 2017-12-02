@@ -569,3 +569,75 @@ LinEnum是一款Linux文件枚举及权限提升检查工具<br>
 [Github地址](https://github.com/rebootuser/LinEnum)<br>
 安装:`wget -N --no-check-certificate https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh
 `<br>
+
+
+#### 恶意软件扫描工具maldet
+github仓库：https://github.com/rfxn/linux-malware-detect<br>
+Maldet 也被称为 Linux Malware Detect（LMD）,用于处理共享托管环境中的常见威胁。 它使用来自网络边缘入侵检测系统的威胁数据来提取主动攻击的恶意软件，并生成用于检测的签名。<br>
+软件的一大特点是可以自动处理受感染的文件和应用，并且也可以发送邮件警告用户<br>
+<br>
+安装最新版：<br>
+```
+wget http://www.rfxn.com/downloads/maldetect-current.tar.gz
+tar -zxvf maldetect*
+cd ./maldetect-*
+sudo bash ./install.sh
+```
+执行过程中可能会遇到依赖问题而无法安装，那么执行：<br>
+```
+sudo apt-get install clamav -y
+```
+ClamAV做为LMD的扫描引擎。<br>
+更新病毒库：`freshclam`<br>
+file目录下有一个conf.maldet 配置文件，可以对其配置：<br>
+```
+将 email_alert 设置为 1
+在 email_addr 添加你的电子邮件地址
+将 email_ignore_clean 设置为 1，可以在自动清除恶意软件时忽略警报邮件。
+将 quarantine_hits 设置为 1 可以自动隔离恶意软件和受影响的文件
+将 quarantine_clean 设置为 1 可以自动清除受影响的文件（不推荐）
+将 quarantine_suspend_user 设置为 1 可以暂停受影响的账户（不推荐）
+```
+手动扫描：`sudo maldet --scan-all /root`<br>
+自动扫描：<br>
+在 Maldet 的安装过程中，cronjob 功能也将安装到 /etc/cron.daily/maldet，这样就可以自动扫描主目录以及最近每天更改的任何文件和文件夹。<br>
+扫描目录：<br>
+```
+maldet -a /document
+```
+查看扫描报告：<br>
+```
+maldet --report 161101-0651.14136  #maldet -e list 列出所有报告
+```
+监控一个目录：<br>
+```
+maldet -m /root
+```
+查看监控日志：<br>
+```
+tail -f /usr/local/maldetect/logs/inotify_log
+```
+定时任务：<br>
+```
+* 4 * * * /usr/local/sbin/maldet -b -a /root
+```
+重启cron：
+```
+/etc/init.d/cron restart
+```
+还原被隔离的软件：<br>
+```
+sudo maldet –restore/-s FILENAME
+```
+
+
+参考：<br>
+[如何使用Maldet检测和清除Linux中的恶意软件](https://www.sysgeek.cn/maldet/)<br>
+[centos安装恶意软件检测工具MalDet(配置说明丰富)](https://chaihongjun.me/os/linux/214.html)<br>
+[CentOS 7安装LMD杀毒软件](http://blog.topspeedsnail.com/archives/10192)<br>
+[How to install and use Linux Malware Detect (LMD) with ClamAV on Ubuntu 16](https://www.globo.tech/learning-center/install-use-lmd-clamav-ubuntu-16/)<br>
+
+<br><br>
+
+[三种工具来扫描Linux服务器](https://www.howtoing.com/how-to-scan-linux-for-malware-and-rootkits)<br>
+[推荐5款针对Ubuntu系统的最佳杀毒软件](https://www.sysgeek.cn/ubuntu-antivirus-program/)<br>
