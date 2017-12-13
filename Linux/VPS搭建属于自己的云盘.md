@@ -104,7 +104,17 @@ sudo /etc/init.d/apache2 stop
 # 尝试使用上面这个关闭，如果没效果或者提示什么错误无法关闭，那就用下面这个强行关闭进程。
 kill -9 $(ps -ef|grep "apache2"|grep -v "grep"|awk '{print $2}')
 ```
-如果不想要apache2了，可以卸载:
+如果不想要apache2了k可以禁用apache的自启：
+```
+cd /etc/rc3.d
+ls
+#找到apache2，然后
+sudo mv S02apache2 K02apache2
+
+以S开头表示开机自启动，K开头表示开机不启动
+```
+
+当然也可以卸载:
 ```
 # 以下代码仅限 Debian/Ubuntu 系统 #
 sudo apt-get remove --purge apache2
