@@ -66,6 +66,31 @@ restart
 force-reload
 ```
 
+#### 上述总结：
+<br>
+三个目录 =>
+<ul>
+    <li>/etc/rcN.d/ 是System V init系统启动时查找的服务程序目录。</li>
+    <li>/etc/init.d/ 目录是System V init系统真正的服务程序所在地。</li>
+    <li>/etc/init/ 是Upstart系统寻找作业配置文件的地方。</li>
+</ul>
+<br>
+
+两个文件 =>
+<ul>
+    <li>/etc/inittab 是System V init系统的配置文件，其中有设置默认的运行级别。</li>
+    <li>/etc/rc.local 是一个用户常用来添加系统启动脚本的地方。</li>
+</ul>
+<br>
+
+一个命令 =>
+<br>
+service 是用来操作System V init脚本或Upstart作业的命令接口。
+
+参考：<br>
+[http://monklof.com/post/14/](http://monklof.com/post/14/)
+<br>
+
 ### 通过ln -s方式创建自启动任务
 
 `/etc/rc[0~6].d`其实是`/etc/rc.d/rc[0~6].d`的软连接，主要是为了保持和Unix的兼容性才做此策。不同的发行版之间可能处在差异，另外，同个发行版可能因为自身版本原因也会存在差异，比如ubuntu16.04不存在`/etc/rc.d`、`/etc/rc.d/init.d/`目录<br>
@@ -147,3 +172,4 @@ sysv-rc-conf的命令格式和chkconfig基本一致<br>
 
 补充，用户可以同`update-rc.d`命令来管理任务启动项，详情参考：<br>
 http://blog.csdn.net/shb_derek1/article/details/8489112<br>
+
