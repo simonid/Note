@@ -144,42 +144,49 @@ Debian官方的建议配置：<br>
 ```
 *filter
 
-# Allows all loopback (lo0) traffic and drop all traffic to 127/8 that doesn't use lo0
+# Permette tutto il traffico su loopback (lo0) traffic e elimina tutto il traffico che non usa lo0 verso 127/8
 -A INPUT -i lo -j ACCEPT
 -A INPUT ! -i lo -d 127.0.0.0/8 -j REJECT
 
-# Accepts all established inbound connections
+# Accetta in entrata su tutte le connessioni stabilite
 -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
-# Allows all outbound traffic
-# You could modify this to only allow certain traffic
+# Permette tutto il traffico in uscita
+# Potrebbe essere modificato per permettero solo un certo tipo di traffico
 -A OUTPUT -j ACCEPT
 
-# Allows HTTP and HTTPS connections from anywhere (the normal ports for websites)
+# Permette connessioni HTTP e HTTPS da qualsiasi parte provengano (le normali porte per i siti web)
 -A INPUT -p tcp --dport 80 -j ACCEPT
 -A INPUT -p tcp --dport 443 -j ACCEPT
 
-# Allows SSH connections 
-# The --dport number is the same as in /etc/ssh/sshd_config
+# Permette le connessioni SSH
+# Il numero --dport e' lo stesso di quello in /etc/ssh/sshd_config
 -A INPUT -p tcp -m state --state NEW --dport 22 -j ACCEPT
+## 注意这里，如果修改了ssh端口那么就要更改22为你的新端口，否则会拒绝连接
 
-# Now you should read up on iptables rules and consider whether ssh access 
-# for everyone is really desired. Most likely you will only allow access from certain IPs.
+# Ora ci si dovrebbe informare sulle regole di iptables e considerare se l'accesso ssh
+# per tutti sia realmente quello che si vuole. Molto probabilmente si preferisce 
+# permettere l'accesso solo per alcuni IP.
 
-# Allow ping
-#  note that blocking other types of icmp packets is considered a bad idea by some
-#  remove -m icmp --icmp-type 8 from this line to allow all kinds of icmp:
-#  https://security.stackexchange.com/questions/22711
+# Permettere ping
+# notare che bloccare altri tipi di pacchetti icmp è considerata da alcuni una cattiva idea
+# rimuovere -m icmp --icmp-type 8 da questa riga per permettere tutti i tipi di icmp:
+# https://security.stackexchange.com/questions/22711
 -A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT
 
-# log iptables denied calls (access via 'dmesg' command)
+# registrare le chiamate negate di iptables (accesso via il comando 'dmesg')
 -A INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables denied: " --log-level 7
 
-# Reject all other inbound - default deny unless explicitly allowed policy:
+# Respingere tutto il resto del traffico in entrata: politica del negare in modo predefinito quando non esplicitamente permesso
 -A INPUT -j REJECT
 -A FORWARD -j REJECT
 
-COMMIT  
+COMMIT
+```
+补充说明：
+```
+-A INPUT -p tcp -m state --state NEW --dport 22 -j ACCEPT
+## 注意这里，如果修改了ssh端口那么就要更改22为你的新端口，否则会拒绝连接
 ```
 
 对于Ubuntu要稍微加点内容：<br>
